@@ -50,12 +50,12 @@ let Filters = [
     Posterize: PosterizeFilter
 ]
 
-let FilterNames = [String](Filters.keys).sort()
+let FilterNames = [String](Filters.keys).sorted()
 
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate
 {
     let mainGroup = UIStackView()
-    let imageView = UIImageView(frame: CGRectZero)
+    let imageView = UIImageView(frame: CGRect.zero)
     let filtersControl = UISegmentedControl(items: FilterNames)
     
     override func viewDidLoad()
@@ -63,20 +63,20 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         super.viewDidLoad()
         
         view.addSubview(mainGroup)
-        mainGroup.axis = UILayoutConstraintAxis.Vertical
-        mainGroup.distribution = UIStackViewDistribution.Fill
+        mainGroup.axis = UILayoutConstraintAxis.vertical
+        mainGroup.distribution = UIStackViewDistribution.fill
         
         mainGroup.addArrangedSubview(imageView)
         mainGroup.addArrangedSubview(filtersControl)
         
-        imageView.contentMode = UIViewContentMode.ScaleAspectFit
+        imageView.contentMode = UIViewContentMode.scaleAspectFit
         
         filtersControl.selectedSegmentIndex = 0
         
         let captureSession = AVCaptureSession()
         captureSession.sessionPreset = AVCaptureSessionPresetPhoto
         
-        let backCamera = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
+        let backCamera = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo)
         
         do
         {
@@ -92,11 +92,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         // although we don't use this, it's required to get captureOutput invoked
         let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        view.layer.addSublayer(previewLayer)
+        view.layer.addSublayer(previewLayer!)
         
         let videoOutput = AVCaptureVideoDataOutput()
         
-        videoOutput.setSampleBufferDelegate(self, queue: dispatch_queue_create("sample buffer delegate", DISPATCH_QUEUE_SERIAL))
+        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sample buffer delegate", attributes: []))
         if captureSession.canAddOutput(videoOutput)
         {
             captureSession.addOutput(videoOutput)
@@ -105,7 +105,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         captureSession.startRunning()
     }
     
-    func captureOutput(captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, fromConnection connection: AVCaptureConnection!)
+    func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!)
     {
         guard let filter = Filters[FilterNames[filtersControl.selectedSegmentIndex]] else
         {
@@ -113,13 +113,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
         
         let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
-        let cameraImage = CIImage(CVPixelBuffer: pixelBuffer!)
+        let cameraImage = CIImage(cvPixelBuffer: pixelBuffer!)
         
         filter!.setValue(cameraImage, forKey: kCIInputImageKey)
         
-        let filteredImage = UIImage(CIImage: filter!.valueForKey(kCIOutputImageKey) as! CIImage!)
+        let filteredImage = UIImage(ciImage: filter!.value(forKey: kCIOutputImageKey) as! CIImage!)
         
-        dispatch_async(dispatch_get_main_queue())
+        DispatchQueue.main.async
         {
             self.imageView.image = filteredImage
         }
